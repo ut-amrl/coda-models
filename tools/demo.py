@@ -109,13 +109,14 @@ def main():
     # isfirstrun=True
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
-            if idx<591: # visualizing trajectory 7 road side 
-                continue
-            if idx > 630:
-                break
+            # if idx<591: # visualizing trajectory 7 road side 
+            #     continue
+            # if idx > 630:
+            #     break
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
+            import pdb; pdb.set_trace()
             pred_dicts, _ = model.forward(data_dict)
 
             # x y z l w h yaw
