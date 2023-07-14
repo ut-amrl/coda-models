@@ -1,10 +1,13 @@
-numpy
-torch>=1.1
+numpy<=1.21
+llvmlite
 numba
+torch>=1.1
 tensorboardX
 easydict
 pyyaml
 scikit-image
 tqdm
+torchvision
+SharedArray==3.1.0
+protobuf==3.20.*
 wandb
-pytorch-scatter
