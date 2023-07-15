@@ -116,7 +116,7 @@ def main():
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             pred_dicts, _ = model.forward(data_dict)
 
             # x y z l w h yaw
@@ -169,7 +169,7 @@ def main():
             json_filename = "3d_bbox_os1_%i_%i.json" % (traj_idx, frame_idx)
             traj_dir = os.path.join("preds", str(traj_idx))
             if not os.path.exists(traj_dir):
-                os.mkdir(traj_dir)
+                os.makedirs(traj_dir)
             json_path = os.path.join(traj_dir, json_filename)
             json_file = open(json_path, "w+")
             json_file.write(json.dumps(json_dict, indent=2))
