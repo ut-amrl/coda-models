@@ -1,0 +1,14 @@
+conda create -n ncoda python=3.8
+pip install torch==1.10.0+cu113 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torchvision==0.11.1 -f https://download.pytorch.org/whl/torch_stable.html
+pip install torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
+pip install cumm-cu113 spconv-cu113 wandb
+pip install llvmlite numba
+pip install tensorboardX==2.5.1
+pip install easydict pyyaml
+pip install tqdm
+pip install scikit-image==0.18.0
+pip install SharedArray==3.1.0
+pip install open3d mayavi
+pip install numpy==1.21
+python setup.py develop # builds pcdet 0.5
