@@ -19,3 +19,5 @@ launcher_test*
 test_st3d_model*
 *.sif
 **wandb/
+**/.vscode
+**/.clang-format
