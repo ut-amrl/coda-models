@@ -4,7 +4,7 @@
 #SBATCH -p gpu-a100                        # Queue name
 #SBATCH -N 1                               # Total number of nodes requested (128 cores/node)
 #SBATCH -n 1                               # Total number of mpi tasks requested
-#SBATCH -t 48:00:00                        # Run time (hh:mm:ss)
+#SBATCH -t 24:00:00                        # Run time (hh:mm:ss)
 #SBATCH -A IRI23004                        # Allocation name
 
 export APPTAINERENV_CUDA_VISIBLE_DEVICES=0,1,2
@@ -21,10 +21,47 @@ export WANDB_API_KEY=dfd81f8955f7587d12b13da5256e56f80a89c014
 
 # Launch Dataset to JRDB pretraining models
 
+# # CODa16 ped only
+# export PORT=29500
+# export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_16_pedonly.yaml
+# export EXTRA_TAG1=coda16codacfg
+
 # # CODa32 ped only
 # export PORT=29500
 # export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_32_pedonly.yaml
 # export EXTRA_TAG1=coda32codacfg
+
+# CODa64ped only
+export PORT=29500
+export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_64_pedonly.yaml
+export EXTRA_TAG1=coda64codacfg
+
+# # CODa128ped only
+# export PORT=29500
+# export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_128_pedonly.yaml
+# export EXTRA_TAG1=coda128codacfg
+
+## BEGIN CODa TRAINING WITH AUGS
+
+# # CODa16 ped only
+# export PORT=29500
+# export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_16_pedonly_allaugs.yaml
+# export EXTRA_TAG1=coda16codacfg
+
+# # CODa32 ped only
+# export PORT=29500
+# export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_32_pedonly_allaugs.yaml
+# export EXTRA_TAG1=coda32codacfg
+
+# # CODa64 ped only
+# export PORT=29500
+# export CONFIG_FILE1=cfgs/da-coda-jrdb_models/centerhead_full/pvrcnn_64_pedonly_allaugs.yaml
+# export EXTRA_TAG1=coda64codacfg
+
+
+## END CODA TRAINING WITH AUGS
+
+
 
 # # Waymo ped only
 # export PORT=29500
@@ -68,7 +105,7 @@ export WANDB_API_KEY=dfd81f8955f7587d12b13da5256e56f80a89c014
 # export PRETRAINED_MODEL1=../output/da-coda-jrdb_models/centerhead_full/pvrcnn_32_pedonly/coda32codacfgLR0.010000OPTadam_onecycle/ckpt/checkpoint_epoch_2.pth
 
 # Launch regular models from scratch
-ibrun -n 1 -o 0 task_affinity singularity exec --nv ../st3d_latest.sif bash scripts/dist_train.sh 3 --cfg_file ${CONFIG_FILE1} --extra_tag ${EXTRA_TAG1} >> launcher_train_models_task0
+ibrun -n 1 -o 0 task_affinity singularity exec --nv ../st3d_latest.sif bash scripts/dist_train.sh 3 --cfg_file ${CONFIG_FILE1} --extra_tag ${EXTRA_TAG1} --save_to_file >> launcher_train_models_task0
 # ibrun -n 1 -o 0 task_affinity singularity exec --nv ../st3d_latest.sif bash scripts/dist_train.sh 3 --cfg_file ${CONFIG_FILE2} --extra_tag ${EXTRA_TAG2} >> launcher_train_models_task1
 
 #Launch pretrained model

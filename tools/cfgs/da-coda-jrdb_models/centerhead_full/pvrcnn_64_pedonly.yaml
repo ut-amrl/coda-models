@@ -1,19 +1,18 @@
 CLASS_NAMES: ['Pedestrian']
 
 DATA_CONFIG:
-    _BASE_CONFIG_: cfgs/dataset_configs/da_coda32_oracle_dataset_full.yaml
-    # _BASE_CONFIG_: cfgs/dataset_configs/da_jrdb_dataset.yaml
-    BALANCED_RESAMPLING: True
+    _BASE_CONFIG_: cfgs/dataset_configs/da_coda64_oracle_dataset_full.yaml
+    BALANCED_RESAMPLING: False
     FOV_POINTS_ONLY: False
     SHIFT_COOR: [0.0, 0.0, 0.8] # Should roughly be height of lidar from ground
-    RES: fullrangecoda32
+    RES: fullrangecoda64
 
     TEST:
         BOX_FILTER: {
             'USE_IMAGE_AREA_FILTER': False,
             'FOV_FILTER': False,
             'LIMIT_RANGE': [-75.2, -75.2, -2, 75.2, 75.2, 4]
-        }    
+        }
 
 # DATA_CONFIG_TAR:
 #     _BASE_CONFIG_: cfgs/dataset_configs/da_coda32_oracle_dataset_3class_full.yaml
@@ -230,11 +229,12 @@ MODEL:
 FINETUNE:
     STAGE: scratch
     WANDB: True
-    WANDB_NAME: coda-full-pedonly-32
+    WANDB_NAME: coda-full-pedonly-64
 
 OPTIMIZATION:
     NUM_EPOCHS: 30
-    BATCH_SIZE_PER_GPU: 4 # 20gb
+    BATCH_SIZE_PER_GPU: 8 # 40gb
+    # BATCH_SIZE_PER_GPU: 4 # 20gb
     OPTIMIZER: adam_onecycle
     LR: 0.01
     WEIGHT_DECAY: 0.001
