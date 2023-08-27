@@ -233,8 +233,9 @@ FINETUNE:
 
 OPTIMIZATION:
     NUM_EPOCHS: 30
-    BATCH_SIZE_PER_GPU: 8 # 40gb
-    # BATCH_SIZE_PER_GPU: 4 # 20gb
+    # BATCH_SIZE_PER_GPU: 8 # 30gb train
+    # BATCH_SIZE_PER_GPU: 4 # 20gb train
+    BATCH_SIZE_PER_GPU: 4 # 40gb eva
     OPTIMIZER: adam_onecycle
     LR: 0.01
     WEIGHT_DECAY: 0.001
