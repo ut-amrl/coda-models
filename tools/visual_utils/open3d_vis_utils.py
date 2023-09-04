@@ -209,7 +209,8 @@ def visualize_3d(
                 window_width=1920, window_height=1080,
                 draw_origin=True,
                 save_vid_filename="",
-                show_gt=True
+                show_gt=True,
+                stat_path=None
                 ):
     from pcdet.models import build_network, load_data_to_gpu
     def reset_line_mesh_list(line_mesh_list):
@@ -264,7 +265,17 @@ def visualize_3d(
     bbox_mesh_object = o3d.geometry.TriangleMesh.create_cylinder(0.01, 0.01) # bbox_radius, line length
     gt_bbox_geos = [copy.deepcopy(bbox_mesh_object) for _ in range(MAX_LINE_SEGMENTS)]
     dt_bbox_geos = [copy.deepcopy(bbox_mesh_object) for _ in range(MAX_LINE_SEGMENTS)]
-    gt_bbox_color_map = [[1, 0, 0]] * len(color_map) # Red for all classes
+
+    #Set ground truth bounding box color maps
+    if model is not None:
+        gt_bbox_color_map = [[1, 0, 0]] * len(color_map) # Red for all classes
+    else:
+        gt_bbox_color_map = color_map
+
+    # Load in detection tps, fps, fns
+    if stat_path is not None:
+        import pdb; pdb.set_trace()
+
     with torch.no_grad():
         for idx, data_dict in enumerate(dataloader):
             logger.info(f'Visualizing sample index: \t{idx + 1}')
@@ -281,7 +292,7 @@ def visualize_3d(
                 dt_bbox_geos = build_bbox(pred_boxes, dt_bbox_geos, color_map)
 
             if show_gt and 'gt_boxes' in data_dict.keys():
-                gt_bbox_geos = build_bbox(data_dict['gt_boxes'], gt_bbox_geos, gt_bbox_color_map) # Reserve RED for gt boxes
+                gt_bbox_geos = build_bbox(data_dict['gt_boxes'], gt_bbox_geos, gt_bbox_color_map)
 
             pcd_geo = build_pcd(data_dict['points'][:, 1:], pcd_geo)
 

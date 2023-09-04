@@ -87,12 +87,13 @@ class DemoDataset(DatasetTemplate):
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='cfgs/kitti_models/second.yaml',
+    parser.add_argument('--cfg_file', type=str, default='cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass128full_finetune_headfull.yaml',
                         help='specify the config for demo')
-    parser.add_argument('--data_path', type=str, default='demo_data',
+    parser.add_argument('--data_path', type=str, default='./data/coda128allclass_full',
                         help='specify the point cloud data file or directory')
     parser.add_argument('--ckpt', type=str, default=None, help='specify the pretrained model')
     parser.add_argument('--ext', type=str, default='.bin', help='specify the extension of your point cloud data file')
+    parser.add_argument('--stat_path', type=str, default=None, help='specify the root path to each frame true positive, false positive, and false negative results')
 
     args = parser.parse_args()
 
@@ -148,7 +149,7 @@ def main():
     # vis.get_render_option().background_color = np.zeros(3)
 
     if gen_video and vis_preds:
-        V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="test_split.avi", show_gt=show_gt)
+        V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="test_split.avi", show_gt=show_gt, stat_path=args.stat_path)
     else:
         with torch.no_grad():
             for idx, data_dict in enumerate(demo_dataset):
