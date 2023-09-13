@@ -106,11 +106,11 @@ def main():
     logger = common_utils.create_logger()
     logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
 
-    use_dataset = "coda"
-    gen_video = True
+    use_dataset = "jrdb"
+    gen_video = False
     do_preds = True # Set to true to do inference, otherwise just views ground truth
     vis_preds = True
-    show_gt = False
+    show_gt = True
 
     if use_dataset=="coda":
         demo_splits = ["train", "test", "val"] # TODO: use test split later to avoid frame drops
@@ -150,6 +150,8 @@ def main():
 
     if gen_video and vis_preds:
         V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="test_split.avi", show_gt=show_gt, stat_path=args.stat_path)
+    elif not gen_video:
+        V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="", show_gt=show_gt, view_frame=2280, stat_path=args.stat_path)
     else:
         with torch.no_grad():
             for idx, data_dict in enumerate(demo_dataset):

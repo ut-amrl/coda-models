@@ -210,6 +210,7 @@ def visualize_3d(
                 draw_origin=True,
                 save_vid_filename="",
                 show_gt=True,
+                view_frame=0,
                 stat_path=None
                 ):
     from pcdet.models import build_network, load_data_to_gpu
@@ -278,6 +279,11 @@ def visualize_3d(
 
     with torch.no_grad():
         for idx, data_dict in enumerate(dataloader):
+            if not save_as_vid:
+                if idx<view_frame:
+                    continue
+                elif idx > view_frame:
+                    break
             logger.info(f'Visualizing sample index: \t{idx + 1}')
             data_dict = dataloader.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
@@ -296,9 +302,9 @@ def visualize_3d(
 
             pcd_geo = build_pcd(data_dict['points'][:, 1:], pcd_geo)
 
-            if idx==0:
+            if idx==0 or not save_as_vid:                
                 vis.add_geometry(pcd_geo)
-                
+
                 for g in gt_bbox_geos:
                     vis.add_geometry(g)
 
@@ -320,6 +326,12 @@ def visualize_3d(
 
                 vis.poll_events()
                 vis.update_renderer()
+            print("Running loop")
+            if not save_as_vid:
+                print("Not saving as vid")
+                vis.run()
+                vis.destroy_window()
+
             time.sleep(0.1) # 2 hz
 
             if save_as_vid:
