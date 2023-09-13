@@ -225,7 +225,7 @@ MODEL:
         
     POST_PROCESSING:
         RECALL_THRESH_LIST: [0.3, 0.5, 0.7]
-        SCORE_THRESH: 0.55
+        SCORE_THRESH: 0.1
         OUTPUT_RAW_SCORE: False
 
         EVAL_METRIC: jrdb
@@ -244,8 +244,8 @@ FINETUNE:
 
 OPTIMIZATION:
     NUM_EPOCHS: 30
-    # BATCH_SIZE_PER_GPU: 8 # 30gb
-    BATCH_SIZE_PER_GPU: 6 # 20gb
+    BATCH_SIZE_PER_GPU: 8 # 30gb
+    # BATCH_SIZE_PER_GPU: 6 # 20gb
     OPTIMIZER: adam_onecycle
     LR: 0.01
     WEIGHT_DECAY: 0.001

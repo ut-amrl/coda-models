@@ -390,10 +390,13 @@ class JRDBDataset(DatasetTemplate):
             bbox = annos_dict['bbox'].astype(int).astype(str)
             dimensions = annos_dict['dimensions'].astype(str)
             location = annos_dict['location'].astype(str)
+            location_jrdb = np.hstack((annos_dict['location'][2], 
+                annos_dict['location'][0], annos_dict['location'][1])
+            ).astype(str) # Map hwl to lhw for jrdb evaluation
             rotation_y = annos_dict['rotation_y'].astype(str).reshape(-1, 1)
 
             label_np = np.hstack((otype, truncated, occluded, num_points, alpha, bbox, dimensions, location, rotation_y, conf))
-            
+            import pdb; pdb.set_trace()
             np.savetxt(label_path, label_np, fmt="%s", delimiter=' ', newline='\n')
         
         gt_file = output_dir / 'gt_annos.pkl'
@@ -404,17 +407,17 @@ class JRDBDataset(DatasetTemplate):
         with open(dt_file, 'wb') as f:
             pickle.dump(dt_annos, f)
             print("Dumping dt file: ", dt_file)
-
+        
         # Dump each index to the correct seq directory
         for idx in range(len(gt_annos)):
             info = copy.deepcopy(self.jrdb_infos[idx])
             sample_idx = info['point_cloud']['lidar_idx']
             label_file = f'{sample_idx}.txt'
-
+            
             seq_dir = seq_list[idx]
             gt_path = gt_dir / seq_dir / label_file
             pred_path = pred_dir / seq_dir / label_file
-
+            import pdb; pdb.set_trace()
             save_annos_dict(gt_annos[idx], gt_path, is_gt=True)
             save_annos_dict(dt_annos[idx], pred_path, is_gt=False)
 
