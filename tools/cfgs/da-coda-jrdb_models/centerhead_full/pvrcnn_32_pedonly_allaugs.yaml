@@ -1,7 +1,8 @@
 CLASS_NAMES: ['Pedestrian']
 
 DATA_CONFIG:
-    _BASE_CONFIG_: cfgs/dataset_configs/da_coda32_oracle_dataset_full.yaml
+    # _BASE_CONFIG_: cfgs/dataset_configs/da_coda32_oracle_dataset_full.yaml
+    _BASE_CONFIG_: cfgs/dataset_configs/da_jrdb_dataset_fullrange.yaml
     BALANCED_RESAMPLING: False
     FOV_POINTS_ONLY: False
     SHIFT_COOR: [0.0, 0.0, 0.8] # Should roughly be height of lidar from ground
@@ -225,7 +226,7 @@ MODEL:
         
     POST_PROCESSING:
         RECALL_THRESH_LIST: [0.3, 0.5, 0.7]
-        SCORE_THRESH: 0.55
+        SCORE_THRESH: 0.1
         OUTPUT_RAW_SCORE: False
 
         EVAL_METRIC: jrdb

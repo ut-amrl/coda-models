@@ -22,7 +22,7 @@ import torch
 from pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
-from pcdet.utils import common_utils
+from pcdet.utils import common_utils, box_utils
 from pcdet.datasets import CODataset
 from pcdet.datasets import JRDBDataset
 
@@ -107,9 +107,9 @@ def main():
     logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
 
     use_dataset = "jrdb"
-    gen_video = False
+    gen_video = True
     do_preds = True # Set to true to do inference, otherwise just views ground truth
-    vis_preds = True
+    vis_preds = True # Set to visualize predictions
     show_gt = True
 
     if use_dataset=="coda":
@@ -140,24 +140,40 @@ def main():
 
     class_names = ['Car', 'Pedestrian', 'Cyclist', 'PickupTruck', 'DeliveryTruck', 'ServiceVehicle', 'UtilityVehicle', 'Scooter', 'Motorcycle', 'FireHydrant', 'FireAlarm', 'ParkingKiosk', 'Mailbox', 'NewspaperDispenser', 'SanitizerDispenser', 'CondimentDispenser', 'ATM', 'VendingMachine', 'DoorSwitch', 'EmergencyAidKit', 'Computer', 'Television', 'Dumpster', 'TrashCan', 'VacuumCleaner', 'Cart', 'Chair', 'Couch', 'Bench', 'Table', 'Bollard', 'ConstructionBarrier', 'Fence', 'Railing', 'Cone', 'Stanchion', 'TrafficLight', 'TrafficSign', 'TrafficArm', 'Canopy', 'BikeRack', 'Pole', 'InformationalSign', 'WallSign', 'Door', 'FloorSign', 'RoomLabel', 'FreestandingPlant', 'Tree', 'Other']
 
-    # pts = open3d.geometry.PointCloud()
-    # ref_boxes = None
-    # vis = open3d.visualization.Visualizer()
-    # vis.create_window()
-
-    # vis.get_render_option().point_size = 2.0
-    # vis.get_render_option().background_color = np.zeros(3)
-
     if gen_video and vis_preds:
         V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="test_split.avi", show_gt=show_gt, stat_path=args.stat_path)
-    elif not gen_video:
-        V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="", show_gt=show_gt, view_frame=2280, stat_path=args.stat_path)
+    elif not gen_video and vis_preds:
+        V.visualize_3d(demo_dataset, model, logger, color_map, save_vid_filename="", show_gt=show_gt, view_frame=0, stat_path=args.stat_path)
     else:
         with torch.no_grad():
             for idx, data_dict in enumerate(demo_dataset):
                 logger.info(f'Visualized sample index: \t{idx + 1}')
                 data_dict = demo_dataset.collate_batch([data_dict])
                 load_data_to_gpu(data_dict)
+
+                # Sanity check that dumped gt and pred boxes are good
+                jrdb_dump_gt_path = "/home/arthur/AMRL/Benchmarks/unsupda/ST3D/output/da-coda-jrdb_models/centerhead_full/pvrcnn_32_pedonly_allaugs/coda32codacfgLR0.010000OPTadam_onecycle/eval/coda2jrdbfullrange/epoch_22/val/final_result/data/jrdb_gt/bytes-cafe-2019-02-07_0/002308.txt"
+                jrdb_dump_pred_path = "/home/arthur/AMRL/Benchmarks/unsupda/ST3D/output/da-coda-jrdb_models/centerhead_full/pvrcnn_32_pedonly_allaugs/coda32codacfgLR0.010000OPTadam_onecycle/eval/coda2jrdbfullrange/epoch_22/val/final_result/data/jrdb_preds/bytes-cafe-2019-02-07_0/002308.txt"
+
+                # hwlxyz in KITTI CAMERA FRAME
+                gt_box_camera = np.loadtxt(jrdb_dump_gt_path, usecols=(9, 10, 11, 12, 13, 14, 15)) 
+                pred_box_camera = np.loadtxt(jrdb_dump_pred_path, usecols=(9, 10, 11, 12, 13, 14, 15))
+                # hwlxyzr -> x y z h w l r ( x y z h w l r)
+                # Turns out we dump in the format x y z h w l r instead of x y z l w h r
+                gt_box_camera = gt_box_camera[:, [3, 4, 5, 0, 1, 2, 6]]
+                pred_box_camera = pred_box_camera[:, [3, 4, 5, 0, 1, 2, 6]]
+
+                calib = data_dict['calib'][0]
+
+                # Convert to KITTI LIDAR FRAME (Nx7 for preds and gt)
+                gt_box_lidar = box_utils.boxes3d_kitti_camera_to_lidar(gt_box_camera, calib)
+                pred_box_lidar = box_utils.boxes3d_kitti_camera_to_lidar(pred_box_camera, calib)
+                import pdb; pdb.set_trace()
+                V.draw_scenes(points=data_dict['points'][:, 1:], gt_boxes=gt_box_lidar, 
+                              ref_boxes=pred_box_lidar, ref_scores=np.ones(len(pred_box_lidar)),
+                              ref_labels=np.ones(len(pred_box_lidar), dtype=np.int32)
+                              )
+                import pdb; pdb.set_trace()
 
                 if not do_preds:
                     V.draw_scenes(points=data_dict['points'][:, 1:], gt_boxes=data_dict['gt_boxes'])

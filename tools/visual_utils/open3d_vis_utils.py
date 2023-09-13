@@ -12,6 +12,7 @@ import copy
 import numpy as np
 import cv2
 import os
+from os.path import join
 
 box_colormap = [
     [1, 1, 1],
@@ -152,7 +153,7 @@ def build_pcd(points, o3d_pts):
 
     return o3d_pts
 
-def build_bbox(bboxes, o3d_geos, color_map, bbox_radius=0.05):
+def build_bbox(bboxes, o3d_geos, color_map, bbox_radius=0.05, use_stat_color_map=False):
     """
              4-------- 6
            /|         /|
@@ -173,10 +174,14 @@ def build_bbox(bboxes, o3d_geos, color_map, bbox_radius=0.05):
         line_set, box3d = translate_boxes_to_o3d_instance(bboxes[i])
         bbox_corners_np = np.asarray(box3d.get_box_points())
         
-        bbox_label_idx = bbox_labels[i]-1
-        assert bbox_label_idx>=0 and bbox_label_idx<len(color_map), \
-            f'Bad color map idx available {len(color_map)}, indexed {bbox_label_idx}'
-        bbox_color = color_map[bbox_label_idx] # offset one idx
+        if not use_stat_color_map:
+            bbox_label_idx = bbox_labels[i]-1
+            assert bbox_label_idx>=0 and bbox_label_idx<len(color_map), \
+                f'Bad color map idx available {len(color_map)}, indexed {bbox_label_idx}'
+            bbox_color = color_map[bbox_label_idx] # offset one idx
+        else:
+            assert len(color_map)==bboxes.shape[0], "Number of bbox colors does not match bboxes"
+            bbox_color = color_map[i]
 
         lines = [   [0, 1], [0, 2], [2, 7], [1, 7], 
                     [3, 5], [3, 6], [5, 4], [6, 4],
@@ -194,6 +199,65 @@ def build_bbox(bboxes, o3d_geos, color_map, bbox_radius=0.05):
         # bbox_line_meshes.append(line_mesh1.geoms)
     
     return o3d_geos
+
+def gen_bbox_colormap_from_stats(stat_path, frame, data_dict):
+    """
+    Colors true positive boxes blue, false negatives red
+
+    Match data_dict gt_boxes with boxes in stat_path for get correct idx to modify
+    """
+    from pcdet.utils import box_utils, calibration_kitti
+    np.set_printoptions(precision=3, suppress=True)
+    sample_id = data_dict['frame_id'][0]
+
+    # print("num bboxes ", data_dict['gt_boxes'].shape)
+
+    tp_path = join(stat_path, str(sample_id), "tp.txt")
+    fn_path = join(stat_path, str(sample_id), "fn.txt")
+
+    # In format: x y z l h w r
+    tp_bbox_dims = np.loadtxt(tp_path, dtype=float).reshape(-1, 7)
+    fn_bbox_dims = np.loadtxt(fn_path, dtype=float).reshape(-1, 7)
+
+    # print("tp_indices ", tp_indices.shape)
+    # print("fn_indices ", fn_indices.shape)
+
+    gt_boxes = data_dict['gt_boxes'].cpu().numpy()
+    num_gt_boxes = data_dict['gt_boxes'].shape[1]
+    bbox_color_map = [(0,0,0)]*num_gt_boxes # black is default bbox color
+
+    calib = data_dict['calib'][0]
+    gt_boxes_camera = box_utils.boxes3d_lidar_to_kitti_camera(gt_boxes[0, :, :-1], calib)
+    gt_boxes_camera[:, 1] += 0.8 # Adjust based on shift coor amount
+
+    for bbox_idx in range(len(bbox_color_map)):
+        bbox_dim = gt_boxes_camera[bbox_idx]
+
+        bbox_tp_errors, closest_tp_error_idx = None, None
+        if tp_bbox_dims.shape[0] > 0:
+            bbox_tp_errors = np.linalg.norm(tp_bbox_dims - bbox_dim, axis=-1)
+            closest_tp_error_idx = np.argmin(bbox_tp_errors, axis=-1)
+
+        bbox_fn_errors, closest_fn_error_idx = None, None
+        if fn_bbox_dims.shape[0] > 0:
+            bbox_fn_errors = np.linalg.norm(fn_bbox_dims - bbox_dim, axis=-1)
+            closest_fn_error_idx = np.argmin(bbox_fn_errors, axis=-1)
+
+        if closest_tp_error_idx is None and closest_fn_error_idx is None:
+            continue
+    
+        if closest_tp_error_idx is None:
+            is_box_tp = False
+        elif closest_fn_error_idx is None:
+            is_box_tp = True
+        else:   
+            is_box_tp = bbox_tp_errors[closest_tp_error_idx] < bbox_fn_errors[closest_fn_error_idx]
+
+        if is_box_tp:
+            bbox_color_map[bbox_idx] = (0, 0, 1)
+        else:
+            bbox_color_map[bbox_idx] = (1, 0, 0)
+    return bbox_color_map
 
 # multi frame drawing
 def visualize_3d(
@@ -273,10 +337,6 @@ def visualize_3d(
     else:
         gt_bbox_color_map = color_map
 
-    # Load in detection tps, fps, fns
-    if stat_path is not None:
-        import pdb; pdb.set_trace()
-
     with torch.no_grad():
         for idx, data_dict in enumerate(dataloader):
             if not save_as_vid:
@@ -295,10 +355,15 @@ def visualize_3d(
             if model is not None:
                 pred_dicts, _ = model.forward(data_dict)
                 pred_boxes = torch.hstack((pred_dicts[0]['pred_boxes'], pred_dicts[0]['pred_labels'].reshape(-1, 1)))
-                dt_bbox_geos = build_bbox(pred_boxes, dt_bbox_geos, color_map)
+                dt_bbox_color_map = color_map
+                dt_bbox_geos = build_bbox(pred_boxes, dt_bbox_geos, dt_bbox_color_map)
 
             if show_gt and 'gt_boxes' in data_dict.keys():
-                gt_bbox_geos = build_bbox(data_dict['gt_boxes'], gt_bbox_geos, gt_bbox_color_map)
+                if stat_path is not None: # generate unique color map for dt boxes 
+                    gt_bbox_color_map = gen_bbox_colormap_from_stats(stat_path, idx, data_dict)
+                    gt_bbox_geos = build_bbox(data_dict['gt_boxes'], gt_bbox_geos, gt_bbox_color_map, use_stat_color_map=True)
+                else:
+                    gt_bbox_geos = build_bbox(data_dict['gt_boxes'], gt_bbox_geos, gt_bbox_color_map)
 
             pcd_geo = build_pcd(data_dict['points'][:, 1:], pcd_geo)
 
