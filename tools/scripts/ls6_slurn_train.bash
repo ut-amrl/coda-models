@@ -116,8 +116,6 @@ export WANDB_API_KEY=dfd81f8955f7587d12b13da5256e56f80a89c014
 # export CONFIG_FILE2=cfgs/da-kitti-coda_models/pvrcnn/pvrcnn_old_anchor.yaml 
 # export EXTRA_TAG2=kitti_oracle
 
-
-
 # Launch CODa to AV dataset models
 
 # CODa32 nuscenes oracle
