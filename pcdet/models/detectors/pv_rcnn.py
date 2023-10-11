@@ -9,7 +9,7 @@ class PVRCNN(Detector3DTemplate):
     def forward(self, batch_dict):
         if 'gt_boxes' in batch_dict:
             assert not torch.any(torch.isnan(batch_dict['gt_boxes']))
-
+        
         for cur_module in self.module_list:
             batch_dict = cur_module(batch_dict)
 

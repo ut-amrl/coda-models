@@ -183,7 +183,6 @@ class DataProcessor(object):
 
         Returns:
         """
-
         for cur_processor in self.data_processor_queue:
             data_dict = cur_processor(data_dict=data_dict)
 

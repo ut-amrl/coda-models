@@ -38,11 +38,12 @@ def normalize_color(color):
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='tools/cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass32full_finetune_headfull.yaml',
+    parser.add_argument('--cfg_file', type=str, default='cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass32full_finetune_headfull.yaml',
                         help='specify the config for demo')
     parser.add_argument('--pc', '--point_cloud_topic', type=str, default='/coda/ouster/points',
                         help='specify the point cloud ros topic name')
-    parser.add_argument('--ckpt', type=str, default='ckpts/coda128_allclass_bestoracle.pth', help='specify the pretrained model')
+    parser.add_argument('--ckpt', type=str, default='../ckpts/coda128_allclass_bestoracle.pth', help='specify the pretrained model')
+    parser.add_argument('--save_preds', type=str, default="", help='Saves pred boxes to file, empty arg means do not save. Otherwise, specify valid directory to store preds in')
 
     args = parser.parse_args()
 
@@ -55,7 +56,7 @@ def point_cloud_callback(msg):
         pc_data = point_cloud2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True)
         pc_list = list(pc_data)
         pc_np = np.array(pc_list, dtype=np.float32)
-
+        
         print("Received point cloud with shape ", pc_np.shape)
 
     pc_msg_queue.put(msg)
@@ -94,7 +95,8 @@ def main():
         if not pc_msg_queue.empty():
             pc_msg = pc_msg_queue.get()
             
-            V.visualize_3d(model, dummy_dataset, pc_msg, bbox_3d_pub, color_map, logger)
+            V.visualize_3d(model, dummy_dataset, pc_msg, bbox_3d_pub, color_map, logger, args.save_preds)
+
     logger.info("Demo complete, cleaning up...")
 
 if __name__ == '__main__':

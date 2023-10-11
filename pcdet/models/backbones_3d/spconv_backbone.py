@@ -2,7 +2,7 @@ from functools import partial
 
 from ...utils.spconv_utils import replace_feature, spconv
 import torch.nn as nn
-
+import torch
 
 def post_act_block(in_channels, out_channels, kernel_size, indice_key=None, stride=1, padding=0,
                    conv_type='subm', norm_fn=None):
@@ -116,6 +116,19 @@ class VoxelBackBone8x(nn.Module):
         )
         self.num_point_features = 128
 
+    def dump_voxel_feats(self, feat_name, data_dict, outdir="../model_feats/conv3d"): # saves at project root
+        import os
+        import numpy as np
+        sparse_feats, frame_id = data_dict['multi_scale_3d_features'][feat_name], data_dict['frame_id'][0]
+
+        if not os.path.exists(outdir):
+            print("Creating output directory for model features ", outdir)
+            os.makedirs(outdir)
+
+        sparse_feats_path = os.path.join(outdir, feat_name+f'_{frame_id}.pth')
+        torch.save(sparse_feats, sparse_feats_path)
+        print(f'Saved sparse features to {sparse_feats_path}')
+
     def forward(self, batch_dict):
         """
         Args:
@@ -135,18 +148,18 @@ class VoxelBackBone8x(nn.Module):
             indices=voxel_coords.int(),
             spatial_shape=self.sparse_shape,
             batch_size=batch_size
-        )
+        ) # no change in size [ B 3 SS_Z SS_X SS_Y]
 
-        x = self.conv_input(input_sp_tensor)
-
-        x_conv1 = self.conv1(x)
-        x_conv2 = self.conv2(x_conv1)
-        x_conv3 = self.conv3(x_conv2)
-        x_conv4 = self.conv4(x_conv3)
-
+        x = self.conv_input(input_sp_tensor)    # [ B 16 Z X Y]
+        # Batch B, Channels C
+        x_conv1 = self.conv1(x)                 # [ B 16 Z X Y]
+        x_conv2 = self.conv2(x_conv1)           # [ B 32 Z/2 X/2 Y/2]
+        x_conv3 = self.conv3(x_conv2)           # [ B 64 Z/4 X/4 Y/4]
+        x_conv4 = self.conv4(x_conv3)           # [ B 64 Z/8 X/8 Y/8]
+        
         # for detection head
         # [200, 176, 5] -> [200, 176, 2]
-        out = self.conv_out(x_conv4)
+        out = self.conv_out(x_conv4)            # [ B 64 Z/8 X/8 Y/8] Applies Batchnorm1D + ReLU
 
         batch_dict.update({
             'encoded_spconv_tensor': out,
@@ -160,6 +173,9 @@ class VoxelBackBone8x(nn.Module):
                 'x_conv4': x_conv4,
             }
         })
+        # Dump features to visualize
+        for feat_name in batch_dict['multi_scale_3d_features'].keys():
+            self.dump_voxel_feats(feat_name, batch_dict)
 
         return batch_dict
 

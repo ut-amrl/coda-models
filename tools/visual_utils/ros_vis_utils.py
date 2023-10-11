@@ -1,6 +1,8 @@
+import os
 import time
 
 #LIBRARY IMPORTS
+import torch
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -111,7 +113,7 @@ def pcnp_to_datadict(pc_np, dataloader, frame_id=0):
 
     return data_dict
 
-def visualize_3d(model, dataloader, pc_msg, bbox_3d_pub, color_map, logger=None):
+def visualize_3d(model, dataloader, pc_msg, bbox_3d_pub, color_map, logger=None, save_preds=False):
 
     #1 Prepare pc for model (Optional coordinate conversion if necessary)
     lidar_frame = pc_msg.header.frame_id
@@ -119,6 +121,7 @@ def visualize_3d(model, dataloader, pc_msg, bbox_3d_pub, color_map, logger=None)
 
     pc_data = pc2.read_points(pc_msg, field_names=("x", "y", "z"), skip_nans=True)
     pc_list = list(pc_data)
+
     pc_np = np.array(pc_list, dtype=np.float32)
     data_dict = pcnp_to_datadict(pc_np, dataloader, frame_id=pc_msg.header.seq)
     
@@ -166,4 +169,12 @@ def visualize_3d(model, dataloader, pc_msg, bbox_3d_pub, color_map, logger=None)
         bbox_3d_markers.markers.append(bbox_marker)
     
     bbox_3d_pub.publish(bbox_3d_markers)
+
+    #4 Save predictions to file if necessary
+    if len(save_preds)>0:
+        frame_offset = pc_msg.header.seq
+        save_preds_file = f'predsvis_{frame_offset}.pth'
+        save_preds_path = os.path.join(save_preds, save_preds_file)
+        torch.save(pred_dicts[0], save_preds_path)
+        print(f'Saved preds to {save_preds_path}')
 

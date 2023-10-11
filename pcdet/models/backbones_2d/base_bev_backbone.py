@@ -78,6 +78,30 @@ class BaseBEVBackbone(nn.Module):
 
         self.num_bev_features = c_in
 
+    def dump_voxel_feats(self, feat_name, data_dict, outdir="../model_feats/bev"): # saves at project root
+        import os
+        import numpy as np
+
+        sparse_feats, voxels, voxel_coords = data_dict[feat_name], \
+            data_dict['voxels'], data_dict['voxel_coords']
+        frame_id = data_dict['frame_id'][0]
+
+        if not os.path.exists(outdir):
+            print("Creating output directory for model features ", outdir)
+            os.makedirs(outdir)
+        
+        # Dump bev features
+        sparse_feats_path = os.path.join(outdir, feat_name+f'_{frame_id}.pth')
+        torch.save(sparse_feats, sparse_feats_path)
+
+        # Dump point cloud points
+        voxels_path =  os.path.join(outdir, feat_name+f'_{frame_id}_voxels.pth')
+        voxel_coords_path =  os.path.join(outdir, feat_name+f'_{frame_id}_voxel_coords.pth')
+        torch.save(voxels, voxels_path)
+        torch.save(voxel_coords, voxel_coords_path)
+
+        print(f'Saved sparse features to {sparse_feats_path}')
+
     def forward(self, data_dict):
         """
         Args:
@@ -89,6 +113,7 @@ class BaseBEVBackbone(nn.Module):
         ups = []
         ret_dict = {}
         x = spatial_features
+
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
 
@@ -108,5 +133,6 @@ class BaseBEVBackbone(nn.Module):
             x = self.deblocks[-1](x)
 
         data_dict['spatial_features_2d'] = x
+        self.dump_voxel_feats('spatial_features_2d', data_dict)
 
         return data_dict
