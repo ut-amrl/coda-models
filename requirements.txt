@@ -7,7 +7,8 @@ easydict
 pyyaml
 scikit-image
 tqdm
-torchvision
-SharedArray==3.1.0
-protobuf==3.20.*
 wandb
+# pytorch-scatter
+open3d
+roslibpy
+rospkg
