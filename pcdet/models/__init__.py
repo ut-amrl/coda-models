@@ -15,9 +15,15 @@ def build_network(model_cfg, num_class, dataset):
 
 def load_data_to_gpu(batch_dict):
     for key, val in batch_dict.items():
+        # Convert everything to torch tensors or ints
+        if key=='batch_size':
+            batch_dict[key] = torch.tensor(val).float().cuda()
+
         if not isinstance(val, np.ndarray):
             continue
         if key in ['frame_id', 'metadata', 'calib', 'image_shape']:
+            if key=='frame_id':
+                batch_dict[key] = torch.from_numpy(val).float().cuda()
             continue
         batch_dict[key] = torch.from_numpy(val).float().cuda()
 

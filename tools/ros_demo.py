@@ -38,11 +38,11 @@ def normalize_color(color):
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='tools/cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass32full_finetune_headfull.yaml',
+    parser.add_argument('--cfg_file', type=str, default='cfgs/da-coda-coda_models/waymocenterhead/pvrcnn_allclass32full_finetune_headfull.yaml',
                         help='specify the config for demo')
     parser.add_argument('--pc', '--point_cloud_topic', type=str, default='/coda/ouster/points',
                         help='specify the point cloud ros topic name')
-    parser.add_argument('--ckpt', type=str, default='ckpts/coda128_allclass_bestoracle.pth', help='specify the pretrained model')
+    parser.add_argument('--ckpt', type=str, default='../ckpts/coda128_allclass_bestoracle.pth', help='specify the pretrained model')
 
     args = parser.parse_args()
 
@@ -87,8 +87,11 @@ def main():
     #4 Load dummy data to speed up first pass
     dummy_pc = np.random.rand(1000, 3).astype(np.float32)
     dummy_data_dict = V.pcnp_to_datadict(dummy_pc, dummy_dataset, frame_id=0)
+    import pdb; pdb.set_trace()
+    traced_script_module = torch.jit.trace(model, dummy_data_dict)
+    import pdb; pdb.set_trace()
     pred_dicts, _ = model.forward(dummy_data_dict)
-    
+
     logger.info("Model initalized...")
     while not rospy.is_shutdown():
         if not pc_msg_queue.empty():
