@@ -223,7 +223,7 @@ def visualize_sparse_conv_tensor(visualization_dict):
         predsdir = os.path.join(featdir, "preds")
         predsname = f'predsvis_{frame_offset}.pth'
         predspath       = os.path.join(predsdir, predsname)
-        ax1.scatter(-heatmap_pts_np[:, 1], -heatmap_pts_np[:, 0], s=1,
+        ax1.scatter(heatmap_pts_np[:, 1], heatmap_pts_np[:, 0], s=1,
             c=bev_features_rgb)
         _, _, ax1 = load_bbox_preds(featdir, frame_offset, ax1)
         ax1.set_title("BEV Conv Features")
