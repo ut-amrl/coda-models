@@ -232,7 +232,7 @@ class CODa2KITTI(object):
             label_list = meta_json["ObjectTracking"][self.split]
             self.bbox_label_files.extend(label_list)
 
-            lidar_list = [label_path.replace('3d_label', '3d_raw').replace('.json', '.bin') 
+            lidar_list = [label_path.replace('3d_label', '3d_comp').replace('.json', '.bin')
                 for label_path in label_list]
             self.lidar_files.extend(lidar_list)
 
@@ -285,10 +285,10 @@ class CODa2KITTI(object):
     @staticmethod
     def set_filename_by_prefix(modality, sensor_name, trajectory, frame):
         if "2d_rect"==modality:
-            filetype = "jpg" # change to jpg later
+            filetype = "png" # change to jpg later
         elif "2d_bbox"==modality:
             filetype = "txt"
-        elif "3d_raw"==modality:
+        elif "3d_comp"==modality or "3d_raw"==modality:
             filetype = "bin"
         elif "3d_bbox"==modality:
             filetype = "json"
@@ -442,7 +442,7 @@ class CODa2KITTI(object):
             traj (int): Current trajectory index.
             frame_idx (int): Current frame index.
         """
-        bin_file = self.set_filename_by_prefix("3d_raw", "os1", traj, frame_idx)
+        bin_file = self.set_filename_by_prefix("3d_comp", "os1", traj, frame_idx)
         bin_path = join(self.load_dir, "3d_raw", "os1", traj, bin_file)
         assert isfile(bin_path), "Bin file for traj %s frame %s does not exist: %s" % (traj, frame_idx, bin_path)
         point_cloud = np.fromfile(bin_path, dtype=np.float32).reshape(-1, 4)
