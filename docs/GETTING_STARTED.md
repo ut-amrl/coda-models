@@ -9,20 +9,28 @@ We describe how to prepare the other datasets in the [preparing external dataset
 
 ### Campus Object Dataset (CODa)
 
-Please download the official CODa using the [dataset development kit](https://github.com/ut-amrl/coda-devkit) 
-and link it in the data directory in this repo as follows. You may need to symlink the `3d_raw` directory
-to the `3d_comp` directory if you downloaded CODa by split rather than by sequence.
-
+Please download the official CODa using the [dataset development kit](https://github.com/ut-amrl/coda-devkit) with the command:
+```bashrc
+python scripts/download_split.py -d data/coda -t split --split full
 ```
+Link it in the data directory `coda_original_format` in this repo as follows. You may need to symlink the `3d_raw` directory to the `3d_comp` directory.
+
+Next, download the `2d_bbox` folder from the [url](https://web.corral.tacc.utexas.edu/texasrobotics/web_CODa/CODa_models/). Unzip and arrange as follows:
+
+```bash
 coda-models
 ├── data
-│   ├── coda_original_format
+│   └── coda_original_format
+│       ├── 2d_bbox
 │       ├── 2d_rect
-|       ├── 3d_raw
+│       ├── 3d_bbox
+│       ├── 3d_comp    
+│       ├── 3d_raw         # soft-link to 3d_comp
+│       ├── 3d_semantic
 │       ├── calibrations
 │       ├── metadata
 │       ├── poses
-|       ├── timestamps
+│       └── timestamps
 ├── pcdet
 ├── tools
 ```
@@ -32,33 +40,64 @@ coda-models
 python tools/create_data.py coda
 ```
 
+You should now see the following file structure:
+
+```bash
+coda-models
+├── data
+│   ├── coda_original_format
+│   │   ├── 2d_bbox
+│   │   ├── 2d_rect
+│   │   ├── 3d_bbox
+│   │   ├── 3d_comp    
+│   │   ├── 3d_raw         # soft-link to 3d_comp
+│   │   ├── 3d_semantic
+│   │   ├── calibrations
+│   │   ├── metadata
+│   │   ├── poses
+│   │   └── timestamps
+│   │
+│   └── coda128_allclass_full
+│       ├── ImageSets
+│       ├── testing
+│       └── training
+├── pcdet
+├── tools
+```
+
+
 * Generate the data infos by running the following command:
 ```python
 python -m pcdet.datasets.coda.coda_dataset create_coda_infos tools/cfgs/dataset_configs/da_coda_oracle_dataset_full.yaml
 ```
 
-You should now see the following file structure.
+You should now see the following file structure:
 
-```
+```bash
 coda-models
 ├── data
 │   ├── coda_original_format
-│       ├── 2d_rect
-|       ├── 3d_raw
-│       ├── calibrations
-│       ├── metadata
-│       ├── poses
-|       ├── timestamps
-│   ├── coda128_allclass_full
+│   │   ├── 2d_bbox
+│   │   ├── 2d_rect
+│   │   ├── 3d_bbox
+│   │   ├── 3d_comp    
+│   │   ├── 3d_raw         # soft-link to 3d_comp
+│   │   ├── 3d_semantic
+│   │   ├── calibrations
+│   │   ├── metadata
+│   │   ├── poses
+│   │   └── timestamps
+│   │
+│   └── coda128_allclass_full
 │       ├── gt_database
-|       ├── ImageSets
+│       ├── ImageSets
 │       ├── testing
 │       ├── training
 │       ├── coda_dbinfos_train.pkl
-|       ├── coda_infos_test.pkl
-|       ├── coda_infos_train.pkl
-|       ├── coda_infos_trainval.pkl
-|       ├── coda_infos_val.pkl
+│       ├── coda_infos_test.pkl
+│       ├── coda_infos_train.pkl
+│       ├── coda_infos_trainval.pkl
+│       └── coda_infos_val.pkl
 ├── pcdet
 ├── tools
 ```
