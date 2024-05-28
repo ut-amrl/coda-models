@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os, sys
+sys.path.append(os.getcwd())
 import argparse
 from os import path as osp
 
@@ -35,8 +37,8 @@ def coda_data_prep(root_path,
             split=split,
             channels=channels
         )
+        print("CODa Split= {} Length = {}".format(split, len(converter)))
         converter.convert()
-        print("length dataset ", len(converter))
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='coda', help='name of the dataset')

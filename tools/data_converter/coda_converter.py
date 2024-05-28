@@ -210,6 +210,15 @@ class CODa2KITTI(object):
             'cam1': 1,
             'os1': 2
         }
+        # CODA Camera to KITTI Camera
+        # 0 is 2
+        # 1 is 3
+        # 2 is assumed 4
+        self.coda_to_kitti_id = {
+            0: 2,
+            1: 3,
+            2: 4
+        }
 
         # Used to downsample lidar vertical channels
         self.channels = channels
@@ -232,7 +241,7 @@ class CODa2KITTI(object):
             label_list = meta_json["ObjectTracking"][self.split]
             self.bbox_label_files.extend(label_list)
 
-            lidar_list = [label_path.replace('3d_label', '3d_raw').replace('.json', '.bin') 
+            lidar_list = [label_path.replace('3d_label', '3d_comp').replace('.json', '.bin')
                 for label_path in label_list]
             self.lidar_files.extend(lidar_list)
 
@@ -285,10 +294,10 @@ class CODa2KITTI(object):
     @staticmethod
     def set_filename_by_prefix(modality, sensor_name, trajectory, frame):
         if "2d_rect"==modality:
-            filetype = "jpg" # change to jpg later
+            filetype = "png" # change to jpg later
         elif "2d_bbox"==modality:
             filetype = "txt"
-        elif "3d_raw"==modality:
+        elif "3d_comp"==modality or "3d_raw"==modality:
             filetype = "bin"
         elif "3d_bbox"==modality:
             filetype = "json"
@@ -381,7 +390,7 @@ class CODa2KITTI(object):
             frame_idx (int): Current frame index.
         """
         assert isfile(src_img_path), "Image file does not exist: %s" % src_img_path
-        kitti_img_path = f'{self.image_save_dir}{str(cam_id)}/' + \
+        kitti_img_path = f'{self.image_save_dir}{str(self.coda_to_kitti_id[cam_id])}/' + \
                 f'{str(traj).zfill(2)}{str(frame_idx).zfill(5)}.jpg'
         shutil.copyfile(src_img_path, kitti_img_path)
 
@@ -424,10 +433,18 @@ class CODa2KITTI(object):
         for cam_id in self.cam_ids:
             calib_context += 'P' + str(cam_id) + ': ' + \
                 ' '.join(camera_calibs[cam_id]) + '\n'
+        # Also map cam_id to KITTI camera ids
+        for cam_id in self.cam_ids:
+            calib_context += 'P' + str(self.coda_to_kitti_id[cam_id]) + ': ' + \
+                ' '.join(camera_calibs[cam_id]) + '\n'
         calib_context += 'R0_rect' + ': ' + ' '.join(R0_rect) + '\n'
         for cam_id in self.cam_ids:
-            calib_context += 'Tr_velo_to_cam_' + str(cam_id) + ': ' + \
-                ' '.join(Tr_os1_to_cams[cam_id]) + '\n'
+            if cam_id == 0:
+                calib_context += 'Tr_velo_to_cam' + ': ' + \
+                                 ' '.join(Tr_os1_to_cams[cam_id]) + '\n'
+            else:
+                calib_context += 'Tr_velo_to_cam_' + str(cam_id) + ': ' + \
+                    ' '.join(Tr_os1_to_cams[cam_id]) + '\n'
 
         with open(
                 f'{self.calib_save_dir}/' +
@@ -442,7 +459,7 @@ class CODa2KITTI(object):
             traj (int): Current trajectory index.
             frame_idx (int): Current frame index.
         """
-        bin_file = self.set_filename_by_prefix("3d_raw", "os1", traj, frame_idx)
+        bin_file = self.set_filename_by_prefix("3d_comp", "os1", traj, frame_idx)
         bin_path = join(self.load_dir, "3d_raw", "os1", traj, bin_file)
         assert isfile(bin_path), "Bin file for traj %s frame %s does not exist: %s" % (traj, frame_idx, bin_path)
         point_cloud = np.fromfile(bin_path, dtype=np.float32).reshape(-1, 4)
@@ -554,7 +571,7 @@ class CODa2KITTI(object):
             line_all = line[:-1] + '\n'
 
             fp_label = open(
-                f'{self.label_save_dir}{cam_id}/' +
+                f'{self.label_save_dir}{self.coda_to_kitti_id[cam_id]}/' +
                 f'{str(traj).zfill(2)}{str(frame_idx).zfill(5)}.txt', 'a')
             fp_label.write(line)
             fp_label.close()

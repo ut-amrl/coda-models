@@ -45,7 +45,19 @@ pip install spconv-cu113
 pip install -r requirements.txt
 ```
 
-c. Install this repository
+c. Link to cuda_11.3 on your machine and use correct GCC/G++
+
+```bashrc
+source cuda_11.3_env 
+
+sudo apt-get install gcc-9 g++-9 -y
+sudo ln -sfn /usr/bin/gcc-9 /usr/bin/gcc
+sudo ln -sfn /usr/bin/gcc-9 /usr/bin/cc
+sudo ln -sfn /usr/bin/g++-9 /usr/bin/g++
+sudo ln -sfn /usr/bin/g++-9 /usr/bin/c++
+```
+
+d. Install this repository
 
 ```
 python setup.py develop

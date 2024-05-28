@@ -196,7 +196,6 @@ dependencies:
       - stack-data==0.6.2
       - tensorboardx==2.6.2.2
       - threadpoolctl==3.2.0
-      - tifffile==2023.8.30
       - tqdm==4.66.1
       - traitlets==5.9.0
       - tzdata==2023.3
